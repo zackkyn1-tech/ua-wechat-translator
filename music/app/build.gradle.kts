@@ -12,8 +12,10 @@ android {
         applicationId = "ua.guitar.archive"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // CI задає VERSION_CODE = номер збірки; локальна збірка — 2.
+        val code = (System.getenv("VERSION_CODE") ?: "2").toInt()
+        versionCode = code
+        versionName = "1.$code"
     }
 
     signingConfigs {
@@ -38,7 +40,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 }
 
 dependencies {

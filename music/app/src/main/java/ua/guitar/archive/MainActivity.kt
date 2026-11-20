@@ -4,6 +4,7 @@ package ua.guitar.archive
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,7 +20,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Завжди темний інтерфейс, включно зі статус-баром і навігацією.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+        )
         setContent {
             val vm: AppVm = viewModel()
             AppTheme {
@@ -45,6 +50,28 @@ fun App(vm: AppVm) {
             val song = lib.songs.find { it.id == s.id }
             if (song != null) SongScreen(vm, lib, song) else LaunchedEffect(s) { vm.back() }
         }
+    }
+    vm.update?.let { u ->
+        val progress = vm.updateProgress
+        AlertDialog(
+            onDismissRequest = { if (progress == null) vm.dismissUpdate() },
+            title = { Text("Нова версія: ${u.title}") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Зараз у тебе ${BuildConfig.VERSION_NAME}. Усі пісні та записи збережуться.")
+                    if (u.notes.isNotBlank()) Text(u.notes, style = MaterialTheme.typography.bodySmall)
+                    if (progress != null) LinearProgressIndicator(progress = { progress }, Modifier.fillMaxWidth())
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = progress == null, onClick = vm::installUpdate) {
+                    Text(if (progress == null) "Оновити" else "Завантаження…")
+                }
+            },
+            dismissButton = {
+                if (progress == null) TextButton(onClick = vm::dismissUpdate) { Text("Пізніше") }
+            },
+        )
     }
     vm.busy?.let { msg ->
         Dialog(onDismissRequest = {}) {

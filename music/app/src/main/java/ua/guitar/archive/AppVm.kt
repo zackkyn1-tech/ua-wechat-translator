@@ -33,6 +33,47 @@ class AppVm(app: Application) : AndroidViewModel(app) {
     var recStartedAt by mutableLongStateOf(0L); private set
     var busy by mutableStateOf<String?>(null); private set
 
+    // ---------- Оновлення ----------
+    var update by mutableStateOf<UpdateInfo?>(null); private set
+    var updateProgress by mutableStateOf<Float?>(null); private set
+    private var downloaded: Pair<Int, File>? = null
+
+    init { checkUpdates(manual = false) }
+
+    fun checkUpdates(manual: Boolean) {
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) { runCatching { Updater.latest() } }
+            val info = r.getOrNull()
+            when {
+                info != null && info.versionCode > BuildConfig.VERSION_CODE -> update = info
+                manual && r.isFailure -> toast("Не вдалося перевірити оновлення. Є інтернет?")
+                manual -> toast("У тебе найновіша версія (${BuildConfig.VERSION_NAME})")
+            }
+        }
+    }
+
+    fun dismissUpdate() { update = null }
+
+    fun installUpdate() {
+        val info = update ?: return
+        val app = getApplication<Application>()
+        downloaded?.let { (code, f) ->
+            if (code == info.versionCode && f.exists()) { Updater.install(app, f); return }
+        }
+        if (updateProgress != null) return
+        viewModelScope.launch {
+            updateProgress = 0f
+            val r = withContext(Dispatchers.IO) {
+                runCatching { Updater.download(app, info.apkUrl) { p -> updateProgress = p } }
+            }
+            updateProgress = null
+            r.onSuccess { f ->
+                downloaded = info.versionCode to f
+                if (!Updater.install(app, f)) toast("Дозволь встановлення, повернись і натисни «Оновити» ще раз")
+            }.onFailure { toast("Не вдалося завантажити оновлення") }
+        }
+    }
+
     fun open(s: Screen) { stack.add(s) }
     fun back() { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
 

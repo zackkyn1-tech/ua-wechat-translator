@@ -102,6 +102,15 @@ fun HomeScreen(vm: AppVm, lib: Library) {
                                         menu = false
                                         importLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
                                     })
+                                HorizontalDivider()
+                                DropdownMenuItem(
+                                    text = { Text("Перевірити оновлення") },
+                                    leadingIcon = { Icon(Icons.Rounded.SystemUpdate, null) },
+                                    onClick = { menu = false; vm.checkUpdates(manual = true) })
+                                DropdownMenuItem(
+                                    text = { Text("Версія ${BuildConfig.VERSION_NAME}") },
+                                    enabled = false,
+                                    onClick = {})
                             }
                         }
                     }

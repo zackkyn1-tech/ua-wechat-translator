@@ -12,8 +12,8 @@ android {
         applicationId = "ua.guitar.archive"
         minSdk = 24
         targetSdk = 35
-        // CI задає VERSION_CODE = номер збірки; локальна збірка — 2.
-        val code = (System.getenv("VERSION_CODE") ?: "2").toInt()
+        // CI задає VERSION_CODE = номер збірки; локальна збірка — 3.
+        val code = (System.getenv("VERSION_CODE") ?: "3").toInt()
         versionCode = code
         versionName = "1.$code"
     }
